@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deploy EC2 instance with Ubuntu 18.04 on t3a.large, with HTTP, HTTPS, SSH open, and Elastic IP.
+
+Parameters:
+  UbuntuImageId:
+    Type: String
+    Default: ami-0d5d9d301c853a04a  # Ensure this AMI ID is correct for your region.
+    Description: AMI ID for Ubuntu 18.04 LTS.
+
+  KeyName:
+    Type: String
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance.
+
+Outputs:
+  InstanceId:
+    Description: The Instance ID of the EC2 instance
+    Value: 
+      Ref: MyInstance
+  PublicIP:
+    Description: The Elastic IP address associated with the EC2 instance
+    Value: 
+      Ref: MyEIP.AllocationId
+  SecurityGroup:
+    Description: The Security Group ID
+    Value: 
+      Ref: InstanceSecurityGroup.GroupId
+    
+Resources:
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP, HTTPS, and SSH access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3a.large
+      SecurityGroupIds:
+        - Ref: InstanceSecurityGroup.GroupId
+      ImageId: Ref UbuntuImageId
+      KeyName: 
+        Ref: KeyName
+
+  ElasticIP:
+  Type: AWS::EC2::EIP
+  Properties:
+    InstanceId: 
+      Ref: MyInstance
